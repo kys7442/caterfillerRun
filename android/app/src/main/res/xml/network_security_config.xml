@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  네트워크 보안 설정
+  - 평문(HTTP) 트래픽을 전면 차단하여 중간자 공격(MITM)에 대비합니다.
+  - 이 앱은 자체 서버와 통신하지 않으며, 광고(AdMob)는 모두 HTTPS를 사용합니다.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
