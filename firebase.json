@@ -1,0 +1,33 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "caterpillar-run-2026",
+          "appId": "1:226270260030:android:0b6319f320fc67841b5a6f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "caterpillar-run-2026",
+          "appId": "1:226270260030:ios:96d8d0390e64607e1b5a6f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "caterpillar-run-2026",
+          "configurations": {
+            "android": "1:226270260030:android:0b6319f320fc67841b5a6f",
+            "ios": "1:226270260030:ios:96d8d0390e64607e1b5a6f"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

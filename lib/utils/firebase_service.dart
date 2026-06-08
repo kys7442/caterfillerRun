@@ -25,15 +25,12 @@ class FirebaseService {
   /// 앱 시작 시 1회 호출. 실패해도 예외를 던지지 않는다.
   Future<void> initialize() async {
     try {
-      // `flutterfire configure` 실행 후에는 자동 생성된 옵션을 사용하고,
-      // 미설정(스텁 → null) 상태에서는 옵션 없이 네이티브 설정 파일에 의존한다.
-      // 둘 다 없으면 catch에서 비활성화 처리된다.
-      final options = DefaultFirebaseOptions.currentPlatform;
-      if (options != null) {
-        await Firebase.initializeApp(options: options);
-      } else {
-        await Firebase.initializeApp();
-      }
+      // `flutterfire configure`로 생성된 옵션으로 초기화한다.
+      // 지원되지 않는 플랫폼이면 currentPlatform이 예외를 던지는데,
+      // 그 경우 아래 catch에서 비활성화 처리되어 게임 흐름에 영향이 없다.
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       _analytics = FirebaseAnalytics.instance;
       _firestore = FirebaseFirestore.instance;
       _enabled = true;
