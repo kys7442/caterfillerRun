@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 스플래시/메뉴 배경과 동일한 하늘색 (FestiveBackground 상단색) -->
+    <color name="launch_background">#3FA9F5</color>
+</resources>

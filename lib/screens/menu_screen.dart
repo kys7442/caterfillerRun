@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/game_provider.dart';
@@ -14,6 +13,8 @@ import 'leaderboard_screen.dart';
 import 'achievements_screen.dart';
 import 'skin_shop_screen.dart';
 import '../widgets/mode_select_sheet.dart';
+import '../widgets/festive_background.dart';
+import '../widgets/caterpillar_mascot.dart';
 
 /// 메인 메뉴 화면
 class MenuScreen extends StatelessWidget {
@@ -23,273 +24,250 @@ class MenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scoreProvider = Provider.of<ScoreProvider>(context);
     final bestRecord = scoreProvider.bestRecord;
+    final gp = context.watch<GameProvider>();
+    final hasSaved = gp.totalScore > 0 || gp.currentLevel > 1;
 
     return Scaffold(
       body: Stack(
         children: [
-        Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.green.shade300,
-              Colors.green.shade100,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
+          // 1) 화려한 정적 배경 (하늘·구름·별빛·깃발)
+          const Positioned.fill(child: FestiveBackground()),
+
+          // 2) 메인 콘텐츠
+          SafeArea(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 게임 타이틀 (애니메이션)
-                const Text(
-                  '애벌레야 ! 어디가 ?',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(2, 2),
-                        blurRadius: 4,
-                        color: Colors.black26,
-                      ),
+                // 상단 우측: 코인 + 출석
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _CoinBar(),
+                  ),
+                ),
+
+                // 중앙: 마스코트 + 타이틀 + 최고기록
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CaterpillarMascot(size: 170)
+                          .animate()
+                          .fadeIn(duration: 500.ms)
+                          .scale(
+                            begin: const Offset(0.7, 0.7),
+                            end: const Offset(1, 1),
+                            duration: 600.ms,
+                            curve: Curves.easeOutBack,
+                          ),
+                      const SizedBox(height: 8),
+                      _buildTitleLogo()
+                          .animate()
+                          .fadeIn(delay: 250.ms, duration: 500.ms)
+                          .slideY(begin: 0.25, end: 0, delay: 250.ms),
+                      const SizedBox(height: 14),
+                      if (bestRecord != null)
+                        _buildBestRecord(bestRecord.level, bestRecord.score)
+                            .animate()
+                            .fadeIn(delay: 500.ms, duration: 500.ms),
                     ],
                   ),
-                )
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .scale(delay: 200.ms, duration: 400.ms),
-                const SizedBox(height: 8),
-                const Text(
-                  'Caterpillar Run',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w500,
+                ),
+
+                // 하단: 큰 PLAY 버튼 + 보조 메뉴 아이콘 줄
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 0, 28, 18),
+                  child: Column(
+                    children: [
+                      _buildPlayButton(context, hasSaved)
+                          .animate()
+                          .fadeIn(delay: 600.ms, duration: 400.ms)
+                          .slideY(begin: 0.4, end: 0, delay: 600.ms),
+                      const SizedBox(height: 18),
+                      _buildSecondaryRow(context)
+                          .animate()
+                          .fadeIn(delay: 750.ms, duration: 400.ms),
+                    ],
                   ),
-                )
-                    .animate()
-                    .fadeIn(delay: 400.ms, duration: 600.ms),
-                const SizedBox(height: 60),
-
-                // 최고 기록 표시 (애니메이션)
-                if (bestRecord != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          '최고 기록',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '레벨 ${bestRecord.level} | 점수 ${bestRecord.score}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 600.ms, duration: 600.ms)
-                      .slideY(begin: -0.2, end: 0, delay: 600.ms),
-                const SizedBox(height: 40),
-
-                // 새 게임 버튼 (모드 선택 → 시작)
-                _MenuButton(
-                  text: '새 게임',
-                  icon: Icons.play_arrow,
-                  onPressed: () async {
-                    SoundManager().playSfx('sounds/button_click.mp3');
-                    final mode = await showModeSelectSheet(context);
-                    if (mode == null || !context.mounted) return;
-                    context.read<GameProvider>().startNewGame(mode: mode);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GameScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 800.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 800.ms),
-                const SizedBox(height: 16),
-
-                // 이어하기 버튼 (저장된 게임이 있을 때만 표시)
-                if (context.watch<GameProvider>().totalScore > 0 ||
-                    context.watch<GameProvider>().currentLevel > 1)
-                  _MenuButton(
-                    text: '이어하기',
-                    icon: Icons.refresh,
-                    onPressed: () {
-                      SoundManager().playSfx('sounds/button_click.mp3');
-                      context.read<GameProvider>().continueGame();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GameScreen(),
-                        ),
-                      );
-                    },
-                  )
-                      .animate()
-                      .fadeIn(delay: 900.ms, duration: 400.ms)
-                      .slideX(begin: -0.3, end: 0, delay: 900.ms),
-                const SizedBox(height: 16),
-
-                // 최근 기록 버튼 (애니메이션)
-                _MenuButton(
-                  text: '최근 기록',
-                  icon: Icons.history,
-                  onPressed: () {
-                    SoundManager().playSfx('sounds/button_click.mp3');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RecordsScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 900.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 900.ms),
-                const SizedBox(height: 16),
-
-                // 랭킹 버튼 (애니메이션)
-                _MenuButton(
-                  text: '랭킹',
-                  icon: Icons.leaderboard,
-                  onPressed: () {
-                    SoundManager().playSfx('sounds/button_click.mp3');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LeaderboardScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 950.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 950.ms),
-                const SizedBox(height: 16),
-
-                // 업적 버튼 (애니메이션)
-                _MenuButton(
-                  text: '업적',
-                  icon: Icons.emoji_events,
-                  onPressed: () {
-                    SoundManager().playSfx('sounds/button_click.mp3');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AchievementsScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 975.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 975.ms),
-                const SizedBox(height: 16),
-
-                // 꾸미기(스킨) 버튼
-                _MenuButton(
-                  text: '꾸미기',
-                  icon: Icons.palette,
-                  onPressed: () {
-                    SoundManager().playSfx('sounds/button_click.mp3');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SkinShopScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 990.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 990.ms),
-                const SizedBox(height: 16),
-
-                // 설정 버튼 (애니메이션)
-                _MenuButton(
-                  text: '설정',
-                  icon: Icons.settings,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 1000.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 1000.ms),
-                const SizedBox(height: 16),
-
-                // 나가기 버튼 (애니메이션)
-                _MenuButton(
-                  text: '나가기',
-                  icon: Icons.exit_to_app,
-                  onPressed: () {
-                    SystemNavigator.pop();
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 1100.ms, duration: 400.ms)
-                    .slideX(begin: -0.3, end: 0, delay: 1100.ms),
+                ),
               ],
-            ),
-          ),
-        ),
-      ),
-
-          // 우상단: 코인 잔액 + 일일 출석 버튼
-          const Positioned(
-            top: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: _CoinBar(),
-              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  /// 화려한 타이틀 로고 (입체 텍스트 + 부제 리본 느낌).
+  Widget _buildTitleLogo() {
+    return Column(
+      children: [
+        // 메인 타이틀 — 두 줄로 나눠 시원하게 (외곽선 + 노랑 채움 입체)
+        _outlinedText('애벌레야!', 44),
+        const SizedBox(height: 2),
+        _outlinedText('어디가?', 44),
+        const SizedBox(height: 8),
+        // 부제 리본
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFB74D),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE69500), width: 2),
+          ),
+          child: const Text(
+            'Caterpillar Run',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 외곽선(보라) + 노랑 채움으로 입체감 있는 타이틀 글자.
+  Widget _outlinedText(String text, double size) {
+    return Stack(
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: size,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+            foreground: Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 8
+              ..color = const Color(0xFF5B2A86),
+          ),
+        ),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 44,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+            color: Color(0xFFFFD54F),
+            shadows: [
+              Shadow(offset: Offset(0, 3), color: Color(0xFFE69500)),
+            ],
+          ).copyWith(fontSize: size),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBestRecord(int level, int score) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.emoji_events, color: Colors.amber, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            '최고  레벨 $level · $score점',
+            style: const TextStyle(
+              fontSize: 15,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              shadows: [Shadow(blurRadius: 2, color: Colors.black26)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 큰 PLAY 버튼 (저장된 게임이 있으면 이어하기, 없으면 모드 선택).
+  Widget _buildPlayButton(BuildContext context, bool hasSaved) {
+    return _BigPlayButton(
+      onTap: () async {
+        SoundManager().playSfx('sounds/button_click.mp3');
+        final mode = await showModeSelectSheet(context);
+        if (mode == null || !context.mounted) return;
+        context.read<GameProvider>().startNewGame(mode: mode);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const GameScreen()),
+        );
+      },
+      onContinue: hasSaved
+          ? () {
+              SoundManager().playSfx('sounds/button_click.mp3');
+              context.read<GameProvider>().continueGame();
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GameScreen()),
+              );
+            }
+          : null,
+    );
+  }
+
+  /// 보조 메뉴 아이콘 줄 (기록·랭킹·업적·꾸미기·설정).
+  Widget _buildSecondaryRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _CircleIconButton(
+          icon: Icons.history_rounded,
+          label: '기록',
+          onTap: () {
+            SoundManager().playSfx('sounds/button_click.mp3');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const RecordsScreen()));
+          },
+        ),
+        _CircleIconButton(
+          icon: Icons.leaderboard_rounded,
+          label: '랭킹',
+          onTap: () {
+            SoundManager().playSfx('sounds/button_click.mp3');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const LeaderboardScreen()));
+          },
+        ),
+        _CircleIconButton(
+          icon: Icons.emoji_events_rounded,
+          label: '업적',
+          onTap: () {
+            SoundManager().playSfx('sounds/button_click.mp3');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AchievementsScreen()));
+          },
+        ),
+        _CircleIconButton(
+          icon: Icons.palette_rounded,
+          label: '꾸미기',
+          onTap: () {
+            SoundManager().playSfx('sounds/button_click.mp3');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SkinShopScreen()));
+          },
+        ),
+        _CircleIconButton(
+          icon: Icons.settings_rounded,
+          label: '설정',
+          onTap: () {
+            SoundManager().playSfx('sounds/button_click.mp3');
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          },
+        ),
+      ],
+    );
+  }
+
 }
 
 /// 메뉴 우상단 코인 잔액 + 출석 버튼
@@ -364,87 +342,185 @@ class _CoinBar extends StatelessWidget {
   }
 }
 
-/// 메뉴 버튼 위젯 (애니메이션 포함)
-class _MenuButton extends StatefulWidget {
-  final String text;
-  final IconData icon;
-  final VoidCallback onPressed;
+/// 큰 PLAY 버튼. 저장된 게임이 있으면 위에 작은 '이어하기'가 함께 뜬다.
+class _BigPlayButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final VoidCallback? onContinue;
 
-  const _MenuButton({
-    required this.text,
-    required this.icon,
-    required this.onPressed,
-  });
+  const _BigPlayButton({required this.onTap, this.onContinue});
 
   @override
-  State<_MenuButton> createState() => _MenuButtonState();
+  State<_BigPlayButton> createState() => _BigPlayButtonState();
 }
 
-class _MenuButtonState extends State<_MenuButton>
+class _BigPlayButtonState extends State<_BigPlayButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+  late final AnimationController _c;
+  late final Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 100),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _c = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 100));
+    _scale = Tween<double>(begin: 1.0, end: 0.95)
+        .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _c.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) {
-        _controller.reverse();
-        widget.onPressed();
-      },
-      onTapCancel: () => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: SizedBox(
-          width: 200,
-          height: 60,
-          child: ElevatedButton(
-            onPressed: widget.onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.green.shade700,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+    return Column(
+      children: [
+        // 이어하기 (저장된 게임이 있을 때만)
+        if (widget.onContinue != null) ...[
+          GestureDetector(
+            onTap: widget.onContinue,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4FC3F7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 6,
+                      offset: Offset(0, 3)),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                  SizedBox(width: 6),
+                  Text('이어하기',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold)),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(widget.icon, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  widget.text,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // 큰 PLAY 버튼
+        GestureDetector(
+          onTapDown: (_) => _c.forward(),
+          onTapUp: (_) {
+            _c.reverse();
+            widget.onTap();
+          },
+          onTapCancel: () => _c.reverse(),
+          child: ScaleTransition(
+            scale: _scale,
+            child: Container(
+              width: double.infinity,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFF7BAC), Color(0xFFF0568E)],
                 ),
-              ],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: const [
+                  BoxShadow(
+                      color: Color(0x55000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 5)),
+                ],
+              ),
+              child: const Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_arrow_rounded,
+                        color: Colors.white, size: 30),
+                    SizedBox(width: 6),
+                    Text(
+                      'PLAY',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        shadows: [
+                          Shadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 2,
+                              color: Color(0x66000000)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// 하단 보조 메뉴용 원형 아이콘 버튼 + 라벨.
+class _CircleIconButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _CircleIconButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.92),
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 3)),
+              ],
+            ),
+            child: Icon(icon, color: const Color(0xFF2E7D32), size: 26),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              shadows: [Shadow(blurRadius: 2, color: Colors.black38)],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
 

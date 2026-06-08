@@ -51,3 +51,6 @@ android/key.properties
 
 # 내부 진행 현황 문서 (형상관리 제외)
 docs/PROJECT_STATUS.md
+
+# Claude Code 로컬 설정
+.claude/

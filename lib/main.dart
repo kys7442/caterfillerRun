@@ -9,6 +9,7 @@ import 'providers/achievement_provider.dart';
 import 'providers/skin_provider.dart';
 import 'screens/menu_screen.dart';
 import 'screens/tutorial_screen.dart';
+import 'screens/splash_screen.dart';
 import 'utils/ad_config.dart';
 import 'utils/ad_manager.dart';
 import 'utils/purchase_manager.dart';
@@ -132,11 +133,13 @@ class _RootGate extends StatefulWidget {
 }
 
 class _RootGateState extends State<_RootGate> {
+  bool _splashDone = false; // 스플래시 표시 완료 여부
   bool? _showTutorial; // null = 판정 전
 
   @override
   void initState() {
     super.initState();
+    // 스플래시가 보이는 동안 튜토리얼 노출 여부를 미리 판정해 둔다.
     TutorialScreen.hasSeen().then((seen) {
       if (mounted) setState(() => _showTutorial = !seen);
     });
@@ -144,12 +147,19 @@ class _RootGateState extends State<_RootGate> {
 
   @override
   Widget build(BuildContext context) {
+    // 1) 스플래시 (애벌레 달리기 애니메이션)
+    if (!_splashDone) {
+      return SplashScreen(
+        onFinish: () => setState(() => _splashDone = true),
+      );
+    }
+    // 2) 튜토리얼 판정이 아직이면 짧은 로딩 (보통 스플래시 동안 끝나 거의 안 보임)
     if (_showTutorial == null) {
-      // 판정 중 — 짧은 로딩
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
+    // 3) 첫 실행이면 튜토리얼, 아니면 메뉴
     if (_showTutorial!) {
       return TutorialScreen(
         onFinish: () => setState(() => _showTutorial = false),

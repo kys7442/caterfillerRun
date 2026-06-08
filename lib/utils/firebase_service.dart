@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../firebase_options.dart';
 
 /// Firebase 연동(분석 + 랭킹)을 안전하게 래핑하는 서비스.
 ///
@@ -24,7 +25,15 @@ class FirebaseService {
   /// 앱 시작 시 1회 호출. 실패해도 예외를 던지지 않는다.
   Future<void> initialize() async {
     try {
-      await Firebase.initializeApp();
+      // `flutterfire configure` 실행 후에는 자동 생성된 옵션을 사용하고,
+      // 미설정(스텁 → null) 상태에서는 옵션 없이 네이티브 설정 파일에 의존한다.
+      // 둘 다 없으면 catch에서 비활성화 처리된다.
+      final options = DefaultFirebaseOptions.currentPlatform;
+      if (options != null) {
+        await Firebase.initializeApp(options: options);
+      } else {
+        await Firebase.initializeApp();
+      }
       _analytics = FirebaseAnalytics.instance;
       _firestore = FirebaseFirestore.instance;
       _enabled = true;

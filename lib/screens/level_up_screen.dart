@@ -230,7 +230,8 @@ class _LevelUpScreenState extends State<LevelUpScreen>
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: () => Navigator.of(context).pop(),
+                              // true = 다음 스테이지로 계속
+                              onPressed: () => Navigator.of(context).pop(true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: gradientColors[1],
@@ -254,6 +255,23 @@ class _LevelUpScreenState extends State<LevelUpScreen>
                                   const SizedBox(width: 8),
                                   const Icon(Icons.arrow_forward_rounded, size: 22),
                                 ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 그만두고 메뉴로 나가기
+                          TextButton.icon(
+                            // false = 게임을 끝내고 메뉴로
+                            onPressed: () => Navigator.of(context).pop(false),
+                            icon: const Icon(Icons.home_rounded,
+                                size: 18, color: Colors.white70),
+                            label: const Text(
+                              '여기서 그만두기',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white70,
                               ),
                             ),
                           ),

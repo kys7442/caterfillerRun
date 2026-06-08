@@ -24,7 +24,7 @@
 ## C. 게임 앱 — Firebase (분석·랭킹·로그인)
 > 상세 절차는 `FIREBASE_SETUP.md`
 - [ ] `flutterfire configure` 실행 → `google-services.json` / `GoogleService-Info.plist` / `firebase_options.dart` 생성
-- [ ] 생성 후 `FirebaseService.initialize()`를 `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`로 변경
+  - ✅ 코드 수정 불필요: `firebase_options.dart`(현재 stub)가 실제 옵션으로 덮어써지면 `FirebaseService.initialize()`가 자동으로 옵션을 사용
 - [ ] Authentication → **Google / Apple 로그인 활성화**
   - Android: 릴리스 키 **SHA-1/SHA-256** 지문 등록
   - iOS: Apple 로그인 capability + REVERSED_CLIENT_ID URL Scheme

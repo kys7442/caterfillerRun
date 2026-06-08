@@ -29,13 +29,10 @@ flutterfire configure
 - 이 명령이 `lib/firebase_options.dart`, `android/app/google-services.json`,
   `ios/Runner/GoogleService-Info.plist`를 자동 생성/배치합니다.
 
-> ⚠️ `firebase_options.dart`가 생기면 `main.dart`의 초기화를 아래처럼 바꾸세요:
-> ```dart
-> import 'firebase_options.dart';
-> // FirebaseService 내부 initialize()에서:
-> await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-> ```
-> (현재는 옵션 없이 `Firebase.initializeApp()`만 호출 → 네이티브 설정 파일에 의존)
+> ✅ **코드 수정 불필요.** `flutterfire configure`가 `lib/firebase_options.dart`(현재는 자리표시 stub)를
+> 실제 옵션으로 덮어쓰면, `FirebaseService.initialize()`가 자동으로
+> `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`를 사용합니다.
+> (미설정 상태에서는 stub이 `null`을 반환해 옵션 없이 초기화 → 설정 없으면 조용히 비활성화)
 
 ### 수동 등록(대안)
 - Android: 콘솔에서 앱 추가 → `google-services.json` → `android/app/`에 배치

@@ -18,6 +18,8 @@ import 'level_up_screen.dart';
 import '../widgets/game_board.dart';
 import '../widgets/banner_ad_widget.dart';
 import '../widgets/eat_feedback.dart';
+import '../widgets/special_food_intro.dart';
+import '../models/food.dart';
 
 /// 게임 플레이 화면
 class GameScreen extends StatefulWidget {
@@ -146,7 +148,7 @@ class _GameScreenState extends State<GameScreen> {
             _soundManager.playSfx('sounds/level_up.mp3');
             _vibrationHelper.mediumImpact();
             FirebaseService.instance.logLevelUp(gameProvider.currentLevel);
-            _showLevelUpScreen(context, gameProvider);
+            _showLevelUpScreen(gameProvider);
             return;
           }
           
@@ -224,6 +226,39 @@ class _GameScreenState extends State<GameScreen> {
       _feedbackOverlays.add(burst);
       _feedbackOverlays.add(popup);
     });
+
+    // 특수 먹이를 '생애 최초'로 먹었으면 안내 팝업으로 짧게 멈춰 설명한다.
+    if (event.isSpecial) {
+      _maybeShowSpecialIntro(gameProvider, event.foodType);
+    }
+  }
+
+  /// 처음 보는 특수 먹이면 게임을 잠시 멈추고 안내 팝업을 띄운다.
+  /// (이미 본 종류면 아무것도 하지 않는다 — 종류별 최초 1회)
+  Future<void> _maybeShowSpecialIntro(
+      GameProvider gameProvider, FoodType type) async {
+    if (await SpecialFoodIntro.hasSeen(type)) return;
+    if (!mounted || gameProvider.state != GameState.playing) return;
+
+    // 게임 루프를 멈추고 일시정지 → 닫으면 재개 (레벨업 다이얼로그와 동일 패턴)
+    _gameTimer?.cancel();
+    _gameTimer = null;
+    gameProvider.pause();
+    await SpecialFoodIntro.markSeen(type);
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SpecialFoodIntroDialog(type: type),
+    );
+
+    if (!mounted) return;
+    // 팝업을 보는 사이 다른 흐름(게임오버/메뉴 이동 등)으로 빠졌으면 재개하지 않는다.
+    if (gameProvider.state == GameState.paused) {
+      gameProvider.resume();
+      _startGameLoop();
+    }
   }
 
   void _saveRecord() {
@@ -273,22 +308,32 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
-  void _showLevelUpScreen(BuildContext context, GameProvider gameProvider) {
+  Future<void> _showLevelUpScreen(GameProvider gameProvider) async {
     if (!mounted) return;
-    
-    showDialog(
+
+    final continueGame = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => LevelUpScreen(
         newLevel: gameProvider.currentLevel,
         totalScore: gameProvider.totalScore,
       ),
-    ).then((_) {
-      if (mounted) {
-        gameProvider.levelUpComplete();
-        _startGameLoop();
-      }
-    });
+    );
+    if (!mounted) return;
+
+    // '여기서 그만두기'(false) → 기록 저장 후 메인 메뉴로 나간다.
+    if (continueGame == false) {
+      _gameTimer?.cancel();
+      _survivalTimer?.cancel();
+      _soundManager.stopBgm();
+      _saveRecord();
+      gameProvider.returnToMenu();
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
+    // 계속하기 → 다음 스테이지 진행
+    gameProvider.levelUpComplete();
+    _startGameLoop();
   }
 
 
