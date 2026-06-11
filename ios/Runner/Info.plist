@@ -2,12 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Google 로그인 콜백용 URL Scheme (GoogleService-Info.plist의 REVERSED_CLIENT_ID와 일치) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.226270260030-3ej0eniuug6cg7apri0li7pd0i3li7h5</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Caterpillar Run</string>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3568835154047233~2226160971</string>
+	<string>ca-app-pub-3568835154047233~3480511780</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<!-- Google AdMob -->

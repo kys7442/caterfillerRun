@@ -10,7 +10,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 class AdConfig {
   // ===== 앱 ID =====
   // AndroidManifest.xml / Info.plist 에도 동일하게 설정되어 있어야 합니다.
-  static const String appId = 'ca-app-pub-3568835154047233~2226160971';
+  static const String appId = 'ca-app-pub-3568835154047233~6305446676';
 
   // ===== Google 공식 테스트 광고 단위 ID =====
   static const String _testBannerAndroid =
@@ -27,16 +27,21 @@ class AdConfig {
       'ca-app-pub-3940256099942544/1712485313';
 
   // ===== 프로덕션 광고 단위 ID =====
-  // TODO(출시 전): AdMob 콘솔에서 플랫폼별 광고 단위를 생성한 뒤 아래 값을 교체하세요.
-  //   - Android / iOS 각각 별도의 광고 단위 ID를 발급받아야 합니다.
+  // AdMob 광고 단위 ID (애벌레 전용 AdMob 앱, 2026-06-10 발급·반영 완료).
+  //   - Android / iOS 각각 별도의 광고 단위 ID.
   //   - 값을 비워두면(빈 문자열) 안전하게 테스트 ID로 폴백합니다.
   static const String _prodBannerAndroid =
-      'ca-app-pub-3568835154047233/6781505112';
-  static const String _prodBannerIOS = ''; // TODO: iOS 배너 단위 ID
-  static const String _prodInterstitialAndroid = ''; // TODO: Android 전면 단위 ID
-  static const String _prodInterstitialIOS = ''; // TODO: iOS 전면 단위 ID
-  static const String _prodRewardedAndroid = ''; // TODO: Android 보상형 단위 ID
-  static const String _prodRewardedIOS = ''; // TODO: iOS 보상형 단위 ID
+      'ca-app-pub-3568835154047233/1032938698';
+  static const String _prodBannerIOS =
+      'ca-app-pub-3568835154047233/4589040322';
+  static const String _prodInterstitialAndroid =
+      'ca-app-pub-3568835154047233/2011854152';
+  static const String _prodInterstitialIOS =
+      'ca-app-pub-3568835154047233/5024154590';
+  static const String _prodRewardedAndroid =
+      'ca-app-pub-3568835154047233/2912996576';
+  static const String _prodRewardedIOS =
+      'ca-app-pub-3568835154047233/5216601995';
 
   static bool get _isIOS => Platform.isIOS;
 

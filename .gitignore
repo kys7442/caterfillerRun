@@ -49,8 +49,8 @@ android/key.properties
 **/*.jks
 **/*.keystore
 
-# 내부 진행 현황 문서 (형상관리 제외)
-docs/PROJECT_STATUS.md
+# 내부 진행 현황 문서 / 다운로드한 설정 파일 (형상관리 제외)
+docs/
 
 # Claude Code 로컬 설정
 .claude/

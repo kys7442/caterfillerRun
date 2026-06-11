@@ -12,7 +12,36 @@
           "package_name": "com.pamp.caterpillar_run"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "226270260030-5dd4g64a1kncigg5qpj4i144khm740fa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pamp.caterpillar_run",
+            "certificate_hash": "d4fd437b19906fe820d80f232626df554a5d0a4e"
+          }
+        },
+        {
+          "client_id": "226270260030-7mdmk1er9r6e8e4s2vrveem6bpf8tlgm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pamp.caterpillar_run",
+            "certificate_hash": "e4344b3820d8144510863f7ee1e3c0265cce6dc5"
+          }
+        },
+        {
+          "client_id": "226270260030-amjnhnekf8ell5bblsbvsbfm8u5ha12a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pamp.caterpillar_run",
+            "certificate_hash": "c9ee4095f45d17271f40411bb02f130bf8d92630"
+          }
+        },
+        {
+          "client_id": "226270260030-e9f2a0po0evthasq063dg6tt5skkj9m3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAah6xIMqdXqkhy63rUDSV19ZMVp3ardIM"
@@ -20,7 +49,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "226270260030-e9f2a0po0evthasq063dg6tt5skkj9m3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "226270260030-3ej0eniuug6cg7apri0li7pd0i3li7h5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.pamp.caterpillarRun"
+              }
+            }
+          ]
         }
       }
     }

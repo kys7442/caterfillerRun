@@ -447,23 +447,8 @@ class GameProvider extends ChangeNotifier {
       );
     }
 
-    // 벽 충돌 (HUD 상단 + 광고 하단 = 게임 영역 경계)
-    const wallMargin = 5.0;
-    if (_safeFrames > 0) {
-      if (newHead.dx < -wallMargin || newHead.dx > screenSize.width + wallMargin ||
-          newHead.dy < _gameAreaTop - wallMargin || newHead.dy > _gameAreaBottom + wallMargin) {
-        gameOver('벽에 부딪혔습니다!');
-        return;
-      }
-    } else {
-      if (newHead.dx < 0 || newHead.dx > screenSize.width ||
-          newHead.dy < _gameAreaTop || newHead.dy > _gameAreaBottom) {
-        gameOver('벽에 부딪혔습니다!');
-        return;
-      }
-    }
-
     // 이동: 세그먼트 체인 방식 (일정 간격 유지)
+    // 먼저 머리를 옮기고 몸통을 따라오게 한 뒤, 모든 세그먼트에 대해 충돌을 검사한다.
     _caterpillar[0] = newHead;
 
     const segmentDistance = 20.0;
@@ -488,7 +473,13 @@ class GameProvider extends ChangeNotifier {
       _caterpillar.add(_caterpillar.last);
     }
 
-    // 충돌 감지
+    // 벽 충돌 — 머리뿐 아니라 몸통 어느 세그먼트라도 게임 영역을 벗어나면 게임 오버.
+    if (_checkWallCollision()) {
+      gameOver('벽에 부딪혔습니다!');
+      return;
+    }
+
+    // 장애물/자기 몸 충돌 감지
     final collision = _checkCollision();
     if (collision != null) {
       if (collision == '꼬리 충돌') {
@@ -633,10 +624,28 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 벽 충돌 감지 — 머리뿐 아니라 모든 세그먼트(몸통 전체)가 게임 영역 밖으로
+  /// 나가면 true. 게임 영역은 좌우 화면 폭, 상단 _gameAreaTop(HUD), 하단
+  /// _gameAreaBottom(광고)으로 둘러싸인 사각형이다.
+  bool _checkWallCollision() {
+    if (_caterpillar.isEmpty || _screenSize == null) return false;
+    final width = _screenSize!.width;
+    // 무적(_safeFrames) 동안은 게임 시작/방패 직후 보호를 위해 약간의 여유를 둔다.
+    final margin = _safeFrames > 0 ? 5.0 : 0.0;
+    for (final seg in _caterpillar) {
+      if (seg.dx < -margin ||
+          seg.dx > width + margin ||
+          seg.dy < _gameAreaTop - margin ||
+          seg.dy > _gameAreaBottom + margin) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// 충돌 감지
   String? _checkCollision() {
     if (_caterpillar.isEmpty) return null;
-    if (_caterpillar.length < 5) return null;
 
     // 길이 증가 유예 프레임 감소
     if (_growGraceFrames > 0) {
@@ -644,30 +653,39 @@ class GameProvider extends ChangeNotifier {
     }
 
     final head = _caterpillar[0];
-    const headRadius = 10.0;
+    // 머리·몸통 모든 세그먼트를 동일한 반경으로 충돌 판정한다.
+    const segRadius = 10.0;
 
-    // 자기 몸 충돌
-    // 세그먼트 간 거리가 20px로 일정하므로, 머리 근처 세그먼트는 제외
-    // U턴 시 충돌 가능한 최소 세그먼트 수: 약 5개 (반원 = pi * radius / segmentDist)
-    final excludeCount = _growGraceFrames > 0 ? 8 : (_safeFrames > 0 ? 6 : 5);
-    for (int i = excludeCount; i < _caterpillar.length; i++) {
-      final segment = _caterpillar[i];
-      final dx = head.dx - segment.dx;
-      final dy = head.dy - segment.dy;
-      if (dx * dx + dy * dy < 15.0 * 15.0) {
-        return '꼬리 충돌';
+    // 장애물 충돌 — 길이와 무관하게 항상 검사하며, 머리뿐 아니라 모든 세그먼트(몸통 전체)를 검사한다.
+    // 벽 충돌과 동일하게, 돌맹이 등 장애물에 어느 부위라도 닿으면 통과 못 하고 게임 오버.
+    // (먹이는 별도로 _checkFoodCollision에서 먹는 처리 — 여기서 다루지 않음)
+    for (final obstacle in _obstacles) {
+      for (final seg in _caterpillar) {
+        if (_safeFrames > 0) {
+          // 게임 시작 직후/방패 직후 무적 동안에는 스폰 겹침 보호를 위해
+          // 약간 더 관대한 판정을 쓰되, 충돌 자체는 그대로 게임 오버로 이어진다.
+          final dx = seg.dx - obstacle.position.dx;
+          final dy = seg.dy - obstacle.position.dy;
+          final minDist = (obstacle.size / 2 + segRadius + 5);
+          if (dx * dx + dy * dy < minDist * minDist) return '장애물 충돌';
+        } else {
+          if (obstacle.checkCollision(seg, segRadius)) return '장애물 충돌';
+        }
       }
     }
 
-    // 장애물 충돌
-    for (final obstacle in _obstacles) {
-      if (_safeFrames > 0) {
-        final dx = head.dx - obstacle.position.dx;
-        final dy = head.dy - obstacle.position.dy;
-        final minDist = (obstacle.size / 2 + headRadius + 5);
-        if (dx * dx + dy * dy < minDist * minDist) return '장애물 충돌';
-      } else {
-        if (obstacle.checkCollision(head, headRadius)) return '장애물 충돌';
+    // 자기 몸 충돌 — 너무 짧으면(반원 U턴이 불가능) 자기 몸에 닿을 수 없으므로 건너뛴다.
+    // 세그먼트 간 거리가 20px로 일정하므로, 머리 근처 세그먼트는 제외.
+    // U턴 시 충돌 가능한 최소 세그먼트 수: 약 5개 (반원 = pi * radius / segmentDist)
+    if (_caterpillar.length >= 5) {
+      final excludeCount = _growGraceFrames > 0 ? 8 : (_safeFrames > 0 ? 6 : 5);
+      for (int i = excludeCount; i < _caterpillar.length; i++) {
+        final segment = _caterpillar[i];
+        final dx = head.dx - segment.dx;
+        final dy = head.dy - segment.dy;
+        if (dx * dx + dy * dy < 15.0 * 15.0) {
+          return '꼬리 충돌';
+        }
       }
     }
 
@@ -701,7 +719,13 @@ class GameProvider extends ChangeNotifier {
     final head = _caterpillar[0];
     final safeX = head.dx.clamp(margin, _screenSize!.width - margin);
     final safeY = head.dy.clamp(_gameAreaTop + margin, _gameAreaBottom - margin);
-    _caterpillar[0] = Offset(safeX, safeY);
+    final safeHead = Offset(safeX, safeY);
+    // 머리뿐 아니라 몸통도 충돌 판정하므로, 몸통 세그먼트가 벽/장애물 밖에
+    // 걸쳐 있으면 방패로 구출해도 다음 프레임에 다시 죽는다.
+    // 따라서 모든 세그먼트를 안전한 머리 위치로 모아 영역 안으로 끌어들인다.
+    for (int i = 0; i < _caterpillar.length; i++) {
+      _caterpillar[i] = safeHead;
+    }
 
     // 이동 정지 + 재충돌 방지 안전 프레임
     _targetPosition = null;
